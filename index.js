@@ -3,7 +3,9 @@ const express = require("express");
 const axios = require("axios");
 const app = express();
 var qs = require("qs");
+
 const port = process.env.PORT || 3000;
+
 const x_api_key = "test_ucc8c5fyl6rl78idn3lqjp:ogINip3R6hrzzARkTI42vv13ybY";
 const app_id = "3789fcc4-e27c-46d5-b270-4f7adc6922ab";
 const baseURL = "https://sandbox.myIdentityPass.com/api/v2/";
@@ -354,8 +356,13 @@ app.post("/api/business/signup", function (req, res) {
       `SELECT * FROM agent WHERE email = '${email}'`,
       function (err, row) {
         // console.log(row.length);
+        var crypto = require("crypto");
+
+        var mykey = crypto.createCipher(email, password);
+        var mystr = mykey.update("abc", "utf8", "hex");
+        mystr += mykey.final("hex");
         if (row.length == 0) {
-          let sql = `INSERT INTO agent(fullname,email,password)VALUES('${fullname}','${email}','${password}')`;
+          let sql = `INSERT INTO agent(fullname,email,password,apikey)VALUES('${fullname}','${email}','${password}','${mystr})`;
 
           con.query(sql, function (err, result) {
             console.log(result.insertId);
@@ -442,14 +449,14 @@ app.post("/api/business/info", (req, res) => {
   }
 });
 
-app.get("/api/businesses/list", (req, res) => {
-  const agentid = req.body.agentid; //"3";
-  const userid = req.body.userid; //"3";
-  if (agentid != "" && userid != "") {
+app.post("/api/businesses/list", (req, res) => {
+  // const agentid = req.body.agentid; //"3";
+  const userid = 3; //req.body.userid; //"3";
+  if (userid != "") {
     con.query(
-      `SELECT * FROM agent WHERE agentID = '${agentid}' and userID = '${userid}' LIMIT 4`,
+      `SELECT * FROM businesses WHERE userID = '${userid}'`,
       function (err, row) {
-        if (row.length == 1) {
+        if (row.length > 0) {
           res.json({
             status: "success",
             message: "successfull",
@@ -470,6 +477,35 @@ app.get("/api/businesses/list", (req, res) => {
     });
   }
 });
+// app.post("/api/businesses/list", (req, res) => {
+//   // const agentid = req.body.agentid; //"3";
+//   const userid = 3; //req.body.userid; //"3";
+//   if (userid != "") {
+//     con.query(
+//       `SELECT * FROM businesses WHERE userID = '${userid}'`,
+//       function (err, row) {
+//         if (row.length > 0) {
+//           res.json({
+//             status: "success",
+//             message: "successfull",
+//             data: { row },
+//           });
+//         } else {
+//           res.json({
+//             status: "error",
+//             message: "Your account is not link to any business yet",
+//           });
+//         }
+//       }
+//     );
+//   } else {
+//     res.json({
+//       status: "error",
+//       message: "userid is empty",
+//     });
+//   }
+// });
+
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
